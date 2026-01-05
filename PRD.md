@@ -48,11 +48,11 @@ This is a multi-faceted platform requiring user roles, event management, roster 
 - **Success criteria**: Statistics calculate totals and averages, display in sortable tables
 
 ### File & Photo Sharing
-- **Functionality**: Upload and organize team documents, photos, and resources
-- **Purpose**: Centralize team resources like practice plans, game strategies, and team photos
-- **Trigger**: User uploads file or accesses team library
-- **Progression**: Go to Files → Click "Upload" → Select file → Add description → Upload → File available to team
-- **Success criteria**: Files organized by category, support preview, and downloadable
+- **Functionality**: Upload and organize team documents, photos, and resources with support for multiple file types (images, PDFs, documents)
+- **Purpose**: Centralize team resources like practice plans, game strategies, and team photos with easy categorization and access
+- **Trigger**: User clicks "Files" navigation or uploads file
+- **Progression**: Navigate to Files → Click "Upload Files" → Select category → Choose files (single or multiple) → Files process and upload → Files display in organized grid view with preview → Users can download or delete
+- **Success criteria**: Files organized by category (all/documents/photos/other), support preview for images, downloadable for all types, persistent storage using useKV, display file metadata (name, size, upload date, uploader)
 
 ### Team Dashboard
 - **Functionality**: Overview screen showing upcoming events, recent messages, roster summary, and quick actions
@@ -113,17 +113,18 @@ Animations should feel snappy and athletic, reinforcing the energetic nature of 
 
 - **Components**:
   - Calendar: Custom-built using react-day-picker base with color-coded event types and attendance indicators
-  - Cards: Shadcn Card for roster profiles, event details, and stat summaries with hover lift effects
-  - Dialog: Shadcn Dialog for event creation/editing forms with full-screen mobile adaptation
-  - Tabs: Shadcn Tabs for switching between Schedule/Roster/Messages/Stats views
+  - Cards: Shadcn Card for roster profiles, event details, stat summaries, and file previews with hover lift effects
+  - Dialog: Shadcn Dialog for event creation/editing forms and image previews with full-screen mobile adaptation
+  - Tabs: Shadcn Tabs for switching between Schedule/Roster/Messages/Stats views and file categories (All/Documents/Photos/Other)
   - Avatar: Shadcn Avatar for player profile images with fallback to initials
-  - Badge: Shadcn Badge for player positions, attendance status, and notification counts
+  - Badge: Shadcn Badge for player positions, attendance status, notification counts, and file counts in tabs
   - Button: Shadcn Button with variants (primary green, secondary navy, ghost for icon actions)
   - Form: Shadcn Form components with react-hook-form for all data entry
-  - Select: Shadcn Select for dropdowns (event types, player positions, time zones)
+  - Select: Shadcn Select for dropdowns (event types, player positions, time zones, file categories)
   - Textarea: Shadcn Textarea for messages and notes
   - Switch: Shadcn Switch for boolean settings
   - Toast: Sonner for success confirmations and error notifications
+  - File Input: Native HTML file input with custom styling for multiple file uploads
 
 - **Customizations**:
   - Custom Calendar Grid: Weekly and monthly views with event density indicators
@@ -131,6 +132,9 @@ Animations should feel snappy and athletic, reinforcing the energetic nature of 
   - Player Stats Table: Sortable table with sticky headers and highlight rows
   - Message Thread Component: WhatsApp-style conversation bubbles with timestamps
   - Team Dashboard Widget: Modular card system with drag-to-reorder capability
+  - File Upload Zone: Drag-and-drop area with file type validation and multi-file support
+  - File Grid: Responsive grid layout with image thumbnails and document icons
+  - Image Preview Modal: Full-screen image viewer with download and delete actions
 
 - **States**:
   - Buttons: Hover lift (translateY -1px), active press (scale 0.98), disabled opacity 0.5
@@ -140,9 +144,10 @@ Animations should feel snappy and athletic, reinforcing the energetic nature of 
   - Dropdowns: Smooth height expansion with fade-in for options
 
 - **Icon Selection**:
-  - Navigation: CalendarBlank (schedule), Users (roster), ChatCircle (messages), ChartBar (stats)
-  - Actions: Plus (add), PencilSimple (edit), Trash (delete), Check (confirm)
+  - Navigation: CalendarBlank (schedule), Users (roster), FolderOpen (files), ChatCircle (messages), ChartBar (stats/dashboard)
+  - Actions: Plus (add), PencilSimple (edit), Trash (delete), Check (confirm), UploadSimple (upload), DownloadSimple (download)
   - Events: Trophy (games), Whistle (practices), Calendar (general events)
+  - Files: Image (photos), File (generic), FilePdf (PDF documents), FileDoc (text documents)
   - Availability: CheckCircle (available), Clock (maybe), XCircle (unavailable)
   - Communication: Bell (notifications), PaperPlaneTilt (send message)
   - Status: Warning (conflicts), Info (announcements), Lock (permissions)
@@ -156,11 +161,14 @@ Animations should feel snappy and athletic, reinforcing the energetic nature of 
   - List Items: py-3 with border-b dividers
 
 - **Mobile**:
-  - Tab Navigation: Bottom fixed tab bar on mobile (<768px), sidebar on desktop
+  - Tab Navigation: Bottom fixed tab bar on mobile (<768px) with 5 tabs including Files, sidebar on desktop
   - Event Forms: Full-screen modal on mobile, centered dialog on desktop
+  - File Upload: Full-screen dialog on mobile with simplified upload interface
+  - File Grid: Single column on mobile, 2-column on tablet, 3-column on desktop
+  - Image Preview: Full-screen on mobile with swipe gestures, modal on desktop
   - Calendar: Single day list view on mobile, week grid on tablet, month grid on desktop
   - Roster: Single column stack on mobile, 2-column grid on tablet, 3-column on desktop
   - Messages: Full viewport on mobile with back navigation, side panel on desktop
   - Quick Actions: Floating action button (FAB) on mobile bottom-right for primary add actions
-  - Touch Targets: Minimum 44px height for all interactive elements
+  - Touch Targets: Minimum 44px height for all interactive elements including file cards
   - Typography: Scale down h1 to 24px on mobile, h2 to 20px, maintain body at 14px for readability

@@ -7,7 +7,7 @@ import { Event, Player, Message } from '@/lib/types'
 import { format, isAfter, parseISO } from 'date-fns'
 
 interface DashboardViewProps {
-  onNavigate: (view: 'schedule' | 'roster' | 'messages' | 'stats') => void
+  onNavigate: (view: 'schedule' | 'roster' | 'messages' | 'stats' | 'files') => void
 }
 
 export default function DashboardView({ onNavigate }: DashboardViewProps) {

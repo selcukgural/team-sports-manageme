@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CalendarBlank, Users, ChatCircle, ChartBar, Plus } from '@phosphor-icons/react'
+import { CalendarBlank, Users, ChatCircle, ChartBar, FolderOpen } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -8,8 +8,9 @@ import RosterView from '@/components/roster/RosterView'
 import MessagesView from '@/components/messages/MessagesView'
 import StatsView from '@/components/stats/StatsView'
 import DashboardView from '@/components/dashboard/DashboardView'
+import FilesView from '@/components/files/FilesView'
 
-type View = 'dashboard' | 'schedule' | 'roster' | 'messages' | 'stats'
+type View = 'dashboard' | 'schedule' | 'roster' | 'messages' | 'stats' | 'files'
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard')
@@ -19,8 +20,8 @@ function App() {
     { id: 'dashboard' as View, label: 'Home', icon: ChartBar },
     { id: 'schedule' as View, label: 'Schedule', icon: CalendarBlank },
     { id: 'roster' as View, label: 'Roster', icon: Users },
+    { id: 'files' as View, label: 'Files', icon: FolderOpen },
     { id: 'messages' as View, label: 'Messages', icon: ChatCircle },
-    { id: 'stats' as View, label: 'Stats', icon: ChartBar },
   ]
 
   const renderView = () => {
@@ -31,6 +32,8 @@ function App() {
         return <ScheduleView />
       case 'roster':
         return <RosterView />
+      case 'files':
+        return <FilesView />
       case 'messages':
         return <MessagesView />
       case 'stats':
