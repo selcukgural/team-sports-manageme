@@ -185,60 +185,66 @@ interface Message {
 
 ## 🔄 Backend Entegrasyonu için Öneriler
 
-Şu anda veriler **client-side (tarayıcıda)** saklanıyor. Backend (C# Web API + PostgreSQL + EF Core) entegrasyonu için:
+Şu anda veriler **client-side (tarayıcıda)** saklanıyor. Backend (C# Web API + PostgreSQL + EF Core) entegrasyonu için detaylı rehberler hazırlanmıştır:
 
-### Gerekli Değişiklikler:
+### 📚 Backend Dokümantasyonu
 
-1. **API Client Oluşturma**
-   - Axios veya Fetch API ile HTTP istekleri
-   - API endpoint'lerine bağlanma
+TeamFlow için kapsamlı backend implementasyonu hazırlanmıştır:
 
-2. **useKV Yerine API Çağrıları**
-   ```typescript
-   // Şu anki:
-   const [roster, setRoster] = useKV<Player[]>('roster', [])
-   
-   // Backend sonrası:
-   const [roster, setRoster] = useState<Player[]>([])
-   useEffect(() => {
-     fetch('/api/players')
-       .then(res => res.json())
-       .then(data => setRoster(data))
-   }, [])
-   ```
+1. **[BACKEND_API.md](./BACKEND_API.md)** - Tüm API endpoint'lerinin detaylı dokümantasyonu
+   - RESTful API yapısı
+   - Request/Response formatları
+   - Her endpoint için TypeScript arayüzleri
+   - PostgreSQL veritabanı şeması
+   - C# Web API'ye migrasyon yol haritası
 
-3. **Authentication & Authorization**
-   - Kullanıcı kimlik doğrulama
-   - JWT token yönetimi
-   - Takım bazlı veri erişimi
+2. **[BACKEND_USAGE.md](./BACKEND_USAGE.md)** - Backend servislerini kullanma rehberi
+   - `useTeamFlowAPI` hook kullanımı
+   - Tüm servisler için örnek kod
+   - Best practice'ler
+   - Component örnekleri
 
-4. **File Upload Handling**
-   - Multipart form data
-   - Dosyaları sunucuya yükleme
-   - Base64 yerine blob storage
+3. **[CSHARP_IMPLEMENTATION.md](./CSHARP_IMPLEMENTATION.md)** - C# implementasyon rehberi
+   - Tam C# Web API kodu
+   - Entity Framework Core modelleri
+   - DbContext konfigürasyonu
+   - Controller implementasyonları
+   - DTO tanımları
+   - Migration yönetimi
+   - Frontend entegrasyonu
 
-### Önerilen API Endpoint Yapısı:
+### 🎯 Hızlı Başlangıç
 
+Mevcut uygulama **service layer pattern** kullanıyor. Tüm backend işlemleri şu servislerde organize edilmiş:
+
+```typescript
+import { useTeamFlowAPI } from '@/hooks/use-teamflow-api'
+
+function MyComponent() {
+  const api = useTeamFlowAPI()
+
+  // Kullanım:
+  const players = api.players.getAll()
+  api.players.create({ name: 'John Doe', ... })
+  api.events.getUpcoming(5)
+  api.files.enableSharing(fileId)
+  api.messages.create({ sender: 'Coach', content: '...' })
+}
 ```
-GET    /api/players              - Tüm oyuncuları getir
-POST   /api/players              - Yeni oyuncu ekle
-PUT    /api/players/{id}         - Oyuncu güncelle
-DELETE /api/players/{id}         - Oyuncu sil
 
-GET    /api/events               - Tüm etkinlikleri getir
-POST   /api/events               - Yeni etkinlik ekle
-PUT    /api/events/{id}          - Etkinlik güncelle
-DELETE /api/events/{id}          - Etkinlik sil
+### ⚡ Backend Mimarisi
 
-GET    /api/files                - Tüm dosyaları getir
-POST   /api/files                - Dosya yükle
-DELETE /api/files/{id}           - Dosya sil
-GET    /api/files/share/{shareId} - Paylaşılan dosyayı getir
-
-GET    /api/messages             - Tüm mesajları getir
-POST   /api/messages             - Yeni mesaj gönder
-DELETE /api/messages/{id}        - Mesaj sil
+**Şu anki durum:**
 ```
+React Component → useTeamFlowAPI Hook → Service Layer → Spark KV Storage
+```
+
+**C# Backend ile:**
+```
+React Component → useTeamFlowAPI Hook → HTTP API Client → C# Web API → PostgreSQL
+```
+
+Service layer arayüzü aynı kalır, sadece implementasyon değişir!
 
 ---
 
