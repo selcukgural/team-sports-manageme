@@ -1,15 +1,16 @@
-import { useKV } from '@github/spark/hooks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ChartBar, Trophy, Target } from '@phosphor-icons/react'
 import { Player, Event, PlayerStats } from '@/lib/types'
+import { useTeamFlowAPI } from '@/hooks/use-teamflow-api'
 
 export default function StatsView() {
-  const [roster = []] = useKV<Player[]>('roster', [])
-  const [events = []] = useKV<Event[]>('events', [])
-  const [playerStats = []] = useKV<PlayerStats[]>('playerStats', [])
+  const api = useTeamFlowAPI()
+  const roster = api.players.getAll()
+  const events = api.events.getAll()
+  const playerStats = api.stats.getAll()
 
   const games = events.filter(e => e.type === 'game')
   const practices = events.filter(e => e.type === 'practice')

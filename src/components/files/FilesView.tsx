@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -27,9 +26,11 @@ import {
 import { TeamFile } from '@/lib/types'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { useTeamFlowAPI } from '@/hooks/use-teamflow-api'
 
 export default function FilesView() {
-  const [files = [], setFiles] = useKV<TeamFile[]>('team-files', [])
+  const api = useTeamFlowAPI()
+  const files = api.files.getAll()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<TeamFile['category']>('document')
   const [uploading, setUploading] = useState(false)
@@ -45,8 +46,6 @@ export default function FilesView() {
     setUploading(true)
 
     try {
-      const newFiles: TeamFile[] = []
-
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i]
         
@@ -67,21 +66,16 @@ export default function FilesView() {
                         file.type.includes('pdf') || file.type.includes('document') ? 'document' : 
                         'other'
 
-        const newFile: TeamFile = {
-          id: `${Date.now()}-${i}`,
+        api.files.create({
           name: file.name,
           type: file.type,
           url: fileData,
           uploadedBy: 'Current User',
-          uploadedAt: Date.now(),
           category: selectedCategory || category
-        }
-
-        newFiles.push(newFile)
+        })
       }
 
-      setFiles((current = []) => [...newFiles, ...current])
-      toast.success(`${newFiles.length} file${newFiles.length > 1 ? 's' : ''} uploaded successfully`)
+      toast.success(`${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} uploaded successfully`)
       setIsDialogOpen(false)
       
       if (fileInputRef.current) {
@@ -96,9 +90,13 @@ export default function FilesView() {
   }
 
   const handleDelete = (fileId: string) => {
-    setFiles((current = []) => current.filter(f => f.id !== fileId))
-    setPreviewFile(null)
-    toast.success('File deleted')
+    const deleted = api.files.delete(fileId)
+    if (deleted) {
+      setPreviewFile(null)
+      toast.success('File deleted')
+    } else {
+      toast.error('Failed to delete file')
+    }
   }
 
   const handleDownload = (file: TeamFile) => {
@@ -113,15 +111,11 @@ export default function FilesView() {
 
   const generateShareLink = (file: TeamFile) => {
     if (!file.shareId) {
-      const shareId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
-      setFiles((current = []) => 
-        current.map(f => 
-          f.id === file.id 
-            ? { ...f, shareId, shareEnabled: true, shareCreatedAt: Date.now() } 
-            : f
-        )
-      )
-      return `${window.location.origin}${window.location.pathname}?share=${shareId}`
+      const shareResponse = api.files.enableSharing(file.id)
+      if (shareResponse) {
+        return shareResponse.shareUrl
+      }
+      return ''
     }
     return `${window.location.origin}${window.location.pathname}?share=${file.shareId}`
   }
@@ -130,34 +124,19 @@ export default function FilesView() {
     const currentlyEnabled = file.shareEnabled
     
     if (currentlyEnabled) {
-      setFiles((current = []) => 
-        current.map(f => 
-          f.id === file.id 
-            ? { ...f, shareEnabled: false } 
-            : f
-        )
-      )
-      toast.success('File sharing disabled')
-    } else {
-      if (!file.shareId) {
-        const shareId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
-        setFiles((current = []) => 
-          current.map(f => 
-            f.id === file.id 
-              ? { ...f, shareId, shareEnabled: true, shareCreatedAt: Date.now() } 
-              : f
-          )
-        )
+      const disabled = api.files.disableSharing(file.id)
+      if (disabled) {
+        toast.success('File sharing disabled')
       } else {
-        setFiles((current = []) => 
-          current.map(f => 
-            f.id === file.id 
-              ? { ...f, shareEnabled: true } 
-              : f
-          )
-        )
+        toast.error('Failed to disable sharing')
       }
-      toast.success('File sharing enabled')
+    } else {
+      const shareResponse = api.files.enableSharing(file.id)
+      if (shareResponse) {
+        toast.success('File sharing enabled')
+      } else {
+        toast.error('Failed to enable sharing')
+      }
     }
   }
 
@@ -191,9 +170,9 @@ export default function FilesView() {
     return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  const documentFiles = files.filter(f => f.category === 'document')
-  const photoFiles = files.filter(f => f.category === 'photo')
-  const otherFiles = files.filter(f => f.category === 'other')
+  const documentFiles = api.files.getFilesByCategory('document')
+  const photoFiles = api.files.getFilesByCategory('photo')
+  const otherFiles = api.files.getFilesByCategory('other')
 
   const FileCard = ({ file }: { file: TeamFile }) => {
     const Icon = getFileIcon(file)

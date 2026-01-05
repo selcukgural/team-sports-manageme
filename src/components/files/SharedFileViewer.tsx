@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
@@ -13,6 +12,7 @@ import {
 import { TeamFile } from '@/lib/types'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { useTeamFlowAPI } from '@/hooks/use-teamflow-api'
 
 interface SharedFileViewerProps {
   shareId: string
@@ -20,12 +20,12 @@ interface SharedFileViewerProps {
 }
 
 export default function SharedFileViewer({ shareId, onClose }: SharedFileViewerProps) {
-  const [files = []] = useKV<TeamFile[]>('team-files', [])
+  const api = useTeamFlowAPI()
   const [sharedFile, setSharedFile] = useState<TeamFile | null>(null)
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
-    const file = files.find(f => f.shareId === shareId && f.shareEnabled)
+    const file = api.files.getByShareId(shareId)
     if (file) {
       setSharedFile(file)
       setNotFound(false)
@@ -33,7 +33,7 @@ export default function SharedFileViewer({ shareId, onClose }: SharedFileViewerP
       setSharedFile(null)
       setNotFound(true)
     }
-  }, [shareId, files])
+  }, [shareId, api.files])
 
   const handleDownload = (file: TeamFile) => {
     const link = document.createElement('a')

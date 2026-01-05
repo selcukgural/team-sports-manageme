@@ -1,19 +1,20 @@
-import { useKV } from '@github/spark/hooks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { CalendarBlank, Users, ChatCircle, Trophy, Calendar, Target } from '@phosphor-icons/react'
 import { Event, Player, Message } from '@/lib/types'
 import { format, isAfter, parseISO } from 'date-fns'
+import { useTeamFlowAPI } from '@/hooks/use-teamflow-api'
 
 interface DashboardViewProps {
   onNavigate: (view: 'schedule' | 'roster' | 'messages' | 'stats' | 'files') => void
 }
 
 export default function DashboardView({ onNavigate }: DashboardViewProps) {
-  const [events = []] = useKV<Event[]>('events', [])
-  const [roster = []] = useKV<Player[]>('roster', [])
-  const [messages = []] = useKV<Message[]>('messages', [])
+  const api = useTeamFlowAPI()
+  const events = api.events.getAll()
+  const roster = api.players.getAll()
+  const messages = api.messages.getAll()
 
   const upcomingEvents = events
     .filter(event => isAfter(parseISO(event.date), new Date()))

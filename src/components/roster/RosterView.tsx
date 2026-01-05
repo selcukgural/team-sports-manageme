@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,9 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Plus, Envelope, Phone, User } from '@phosphor-icons/react'
 import { Player } from '@/lib/types'
 import { toast } from 'sonner'
+import { useTeamFlowAPI } from '@/hooks/use-teamflow-api'
 
 export default function RosterView() {
-  const [roster = [], setRoster] = useKV<Player[]>('roster', [])
+  const api = useTeamFlowAPI()
+  const roster = api.players.getAll()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
@@ -31,20 +32,14 @@ export default function RosterView() {
     e.preventDefault()
     
     if (editingPlayer) {
-      setRoster((current = []) => 
-        current.map(player => 
-          player.id === editingPlayer.id 
-            ? { ...player, ...formData }
-            : player
-        )
-      )
-      toast.success('Player updated successfully')
-    } else {
-      const newPlayer: Player = {
-        id: Date.now().toString(),
-        ...formData,
+      const updated = api.players.update(editingPlayer.id, formData)
+      if (updated) {
+        toast.success('Player updated successfully')
+      } else {
+        toast.error('Failed to update player')
       }
-      setRoster((current = []) => [...current, newPlayer])
+    } else {
+      api.players.create(formData)
       toast.success('Player added successfully')
     }
 
@@ -80,9 +75,13 @@ export default function RosterView() {
   }
 
   const handleDelete = (playerId: string) => {
-    setRoster((current = []) => current.filter(p => p.id !== playerId))
-    setSelectedPlayer(null)
-    toast.success('Player removed')
+    const deleted = api.players.delete(playerId)
+    if (deleted) {
+      setSelectedPlayer(null)
+      toast.success('Player removed')
+    } else {
+      toast.error('Failed to remove player')
+    }
   }
 
   const getInitials = (name: string) => {

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,9 +10,11 @@ import { Plus, PaperPlaneTilt, ChatCircle } from '@phosphor-icons/react'
 import { Message } from '@/lib/types'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { useTeamFlowAPI } from '@/hooks/use-teamflow-api'
 
 export default function MessagesView() {
-  const [messages = [], setMessages] = useKV<Message[]>('messages', [])
+  const api = useTeamFlowAPI()
+  const messages = api.messages.getAll()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -24,15 +25,12 @@ export default function MessagesView() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    const newMessage: Message = {
-      id: Date.now().toString(),
+    api.messages.create({
       sender: 'Coach',
       content: formData.content,
-      timestamp: Date.now(),
       recipients: formData.recipients,
-    }
+    })
     
-    setMessages((current = []) => [newMessage, ...current])
     toast.success('Message sent successfully')
     
     setIsDialogOpen(false)
@@ -47,8 +45,12 @@ export default function MessagesView() {
   }
 
   const handleDelete = (messageId: string) => {
-    setMessages((current = []) => current.filter(m => m.id !== messageId))
-    toast.success('Message deleted')
+    const deleted = api.messages.delete(messageId)
+    if (deleted) {
+      toast.success('Message deleted')
+    } else {
+      toast.error('Failed to delete message')
+    }
   }
 
   const sortedMessages = [...messages].sort((a, b) => b.timestamp - a.timestamp)

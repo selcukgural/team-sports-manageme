@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,10 +11,12 @@ import { Plus, Trophy, Target, Calendar, MapPin, Clock, CheckCircle, XCircle, Qu
 import { Event, EventType, Player, AvailabilityStatus } from '@/lib/types'
 import { format, parseISO, isAfter } from 'date-fns'
 import { toast } from 'sonner'
+import { useTeamFlowAPI } from '@/hooks/use-teamflow-api'
 
 export default function ScheduleView() {
-  const [events = [], setEvents] = useKV<Event[]>('events', [])
-  const [roster = []] = useKV<Player[]>('roster', [])
+  const api = useTeamFlowAPI()
+  const events = api.events.getAll()
+  const roster = api.players.getAll()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
@@ -34,21 +35,14 @@ export default function ScheduleView() {
     e.preventDefault()
     
     if (editingEvent) {
-      setEvents((current = []) => 
-        current.map(event => 
-          event.id === editingEvent.id 
-            ? { ...editingEvent, ...formData }
-            : event
-        )
-      )
-      toast.success('Event updated successfully')
-    } else {
-      const newEvent: Event = {
-        id: Date.now().toString(),
-        ...formData,
-        availability: {}
+      const updated = api.events.update(editingEvent.id, formData)
+      if (updated) {
+        toast.success('Event updated successfully')
+      } else {
+        toast.error('Failed to update event')
       }
-      setEvents((current = []) => [...current, newEvent])
+    } else {
+      api.events.create(formData)
       toast.success('Event created successfully')
     }
 
@@ -84,26 +78,25 @@ export default function ScheduleView() {
   }
 
   const handleDelete = (eventId: string) => {
-    setEvents((current = []) => current.filter(e => e.id !== eventId))
-    setSelectedEvent(null)
-    toast.success('Event deleted')
+    const deleted = api.events.delete(eventId)
+    if (deleted) {
+      setSelectedEvent(null)
+      toast.success('Event deleted')
+    } else {
+      toast.error('Failed to delete event')
+    }
   }
 
   const handleAvailability = (eventId: string, status: AvailabilityStatus) => {
-    setEvents((current = []) =>
-      current.map(event =>
-        event.id === eventId
-          ? {
-              ...event,
-              availability: {
-                ...event.availability,
-                'current-user': status
-              }
-            }
-          : event
-      )
-    )
-    toast.success(`Marked as ${status}`)
+    const updated = api.events.updateAvailability(eventId, {
+      playerId: 'current-user',
+      status
+    })
+    if (updated) {
+      toast.success(`Marked as ${status}`)
+    } else {
+      toast.error('Failed to update availability')
+    }
   }
 
   const upcomingEvents = events
