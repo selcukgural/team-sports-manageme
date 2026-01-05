@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CalendarBlank, Users, ChatCircle, ChartBar, FolderOpen } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { Button } from '@/components/ui/button'
@@ -9,12 +9,36 @@ import MessagesView from '@/components/messages/MessagesView'
 import StatsView from '@/components/stats/StatsView'
 import DashboardView from '@/components/dashboard/DashboardView'
 import FilesView from '@/components/files/FilesView'
+import SharedFileViewer from '@/components/files/SharedFileViewer'
 
 type View = 'dashboard' | 'schedule' | 'roster' | 'messages' | 'stats' | 'files'
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const isMobile = useIsMobile()
+  const [shareId, setShareId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const shareParam = params.get('share')
+    if (shareParam) {
+      setShareId(shareParam)
+    }
+  }, [])
+
+  const handleCloseSharedFile = () => {
+    setShareId(null)
+    window.history.pushState({}, '', window.location.pathname)
+  }
+
+  if (shareId) {
+    return (
+      <>
+        <SharedFileViewer shareId={shareId} onClose={handleCloseSharedFile} />
+        <Toaster />
+      </>
+    )
+  }
 
   const navigation = [
     { id: 'dashboard' as View, label: 'Home', icon: ChartBar },

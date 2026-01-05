@@ -52,4 +52,7 @@ export interface TeamFile {
   uploadedBy: string
   uploadedAt: number
   category: 'document' | 'photo' | 'other'
+  shareId?: string
+  shareEnabled?: boolean
+  shareCreatedAt?: number
 }

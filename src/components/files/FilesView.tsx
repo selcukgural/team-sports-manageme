@@ -3,11 +3,12 @@ import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Switch } from '@/components/ui/switch'
 import { 
   Plus, 
   UploadSimple, 
@@ -17,7 +18,11 @@ import {
   FileDoc,
   Trash,
   DownloadSimple,
-  FolderOpen
+  FolderOpen,
+  ShareNetwork,
+  Link as LinkIcon,
+  Copy,
+  Check
 } from '@phosphor-icons/react'
 import { TeamFile } from '@/lib/types'
 import { format } from 'date-fns'
@@ -30,6 +35,8 @@ export default function FilesView() {
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [previewFile, setPreviewFile] = useState<TeamFile | null>(null)
+  const [shareDialogFile, setShareDialogFile] = useState<TeamFile | null>(null)
+  const [copiedFileId, setCopiedFileId] = useState<string | null>(null)
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
@@ -102,6 +109,64 @@ export default function FilesView() {
     link.click()
     document.body.removeChild(link)
     toast.success('File downloaded')
+  }
+
+  const generateShareLink = (file: TeamFile) => {
+    if (!file.shareId) {
+      const shareId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
+      setFiles((current = []) => 
+        current.map(f => 
+          f.id === file.id 
+            ? { ...f, shareId, shareEnabled: true, shareCreatedAt: Date.now() } 
+            : f
+        )
+      )
+      return `${window.location.origin}${window.location.pathname}?share=${shareId}`
+    }
+    return `${window.location.origin}${window.location.pathname}?share=${file.shareId}`
+  }
+
+  const toggleSharing = (file: TeamFile) => {
+    const currentlyEnabled = file.shareEnabled
+    
+    if (currentlyEnabled) {
+      setFiles((current = []) => 
+        current.map(f => 
+          f.id === file.id 
+            ? { ...f, shareEnabled: false } 
+            : f
+        )
+      )
+      toast.success('File sharing disabled')
+    } else {
+      if (!file.shareId) {
+        const shareId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
+        setFiles((current = []) => 
+          current.map(f => 
+            f.id === file.id 
+              ? { ...f, shareId, shareEnabled: true, shareCreatedAt: Date.now() } 
+              : f
+          )
+        )
+      } else {
+        setFiles((current = []) => 
+          current.map(f => 
+            f.id === file.id 
+              ? { ...f, shareEnabled: true } 
+              : f
+          )
+        )
+      }
+      toast.success('File sharing enabled')
+    }
+  }
+
+  const copyShareLink = (file: TeamFile) => {
+    const link = generateShareLink(file)
+    navigator.clipboard.writeText(link)
+    setCopiedFileId(file.id)
+    toast.success('Link copied to clipboard')
+    setTimeout(() => setCopiedFileId(null), 2000)
   }
 
   const getFileIcon = (file: TeamFile) => {
@@ -191,6 +256,14 @@ export default function FilesView() {
               >
                 <DownloadSimple size={16} />
                 Download
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShareDialogFile(file)}
+                className="gap-1"
+              >
+                <ShareNetwork size={16} />
               </Button>
               <Button
                 size="sm"
@@ -413,6 +486,101 @@ export default function FilesView() {
                   Delete
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {shareDialogFile && (
+        <Dialog open={!!shareDialogFile} onOpenChange={() => setShareDialogFile(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Share File</DialogTitle>
+              <DialogDescription>
+                Generate a shareable link to share this file with team members outside the app
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <Label htmlFor="share-toggle" className="text-base font-semibold">
+                    Enable Sharing
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Allow anyone with the link to access this file
+                  </p>
+                </div>
+                <Switch
+                  id="share-toggle"
+                  checked={shareDialogFile.shareEnabled || false}
+                  onCheckedChange={() => toggleSharing(shareDialogFile)}
+                />
+              </div>
+
+              {shareDialogFile.shareEnabled && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted rounded-lg space-y-3">
+                    <div className="flex items-start gap-2">
+                      <LinkIcon size={20} className="text-primary mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                          Shareable Link
+                        </Label>
+                        <p className="text-sm font-mono break-all bg-background p-2 rounded border">
+                          {generateShareLink(shareDialogFile)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <Button
+                      onClick={() => copyShareLink(shareDialogFile)}
+                      className="w-full gap-2"
+                      variant={copiedFileId === shareDialogFile.id ? "secondary" : "default"}
+                    >
+                      {copiedFileId === shareDialogFile.id ? (
+                        <>
+                          <Check size={20} />
+                          Link Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={20} />
+                          Copy Link
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  <div className="bg-accent/20 border border-accent/30 rounded-lg p-3">
+                    <div className="flex gap-2">
+                      <div className="w-1 bg-accent rounded-full flex-shrink-0" />
+                      <div className="text-xs text-accent-foreground space-y-1">
+                        <p className="font-semibold">How sharing works:</p>
+                        <ul className="space-y-0.5 list-disc list-inside">
+                          <li>Anyone with the link can view and download this file</li>
+                          <li>The link remains active until sharing is disabled</li>
+                          <li>You can disable sharing at any time</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {shareDialogFile.shareCreatedAt && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      Sharing enabled on {format(new Date(shareDialogFile.shareCreatedAt), 'MMM d, yyyy')}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!shareDialogFile.shareEnabled && (
+                <div className="text-center py-6">
+                  <ShareNetwork size={48} className="mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    Enable sharing to generate a link that you can share with others
+                  </p>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>

@@ -48,11 +48,11 @@ This is a multi-faceted platform requiring user roles, event management, roster 
 - **Success criteria**: Statistics calculate totals and averages, display in sortable tables
 
 ### File & Photo Sharing
-- **Functionality**: Upload and organize team documents, photos, and resources with support for multiple file types (images, PDFs, documents)
-- **Purpose**: Centralize team resources like practice plans, game strategies, and team photos with easy categorization and access
-- **Trigger**: User clicks "Files" navigation or uploads file
-- **Progression**: Navigate to Files → Click "Upload Files" → Select category → Choose files (single or multiple) → Files process and upload → Files display in organized grid view with preview → Users can download or delete
-- **Success criteria**: Files organized by category (all/documents/photos/other), support preview for images, downloadable for all types, persistent storage using useKV, display file metadata (name, size, upload date, uploader)
+- **Functionality**: Upload and organize team documents, photos, and resources with support for multiple file types (images, PDFs, documents). Generate shareable links to share files with team members outside the app.
+- **Purpose**: Centralize team resources like practice plans, game strategies, and team photos with easy categorization and access. Enable sharing with external stakeholders (parents, guests, etc.) without requiring app access.
+- **Trigger**: User clicks "Files" navigation, uploads file, or clicks share button on existing file
+- **Progression**: Navigate to Files → Click "Upload Files" → Select category → Choose files (single or multiple) → Files process and upload → Files display in organized grid view with preview → Users can download, share, or delete → To share: Click share icon → Toggle "Enable Sharing" → Copy generated link → Share link externally → External users access file via unique URL
+- **Success criteria**: Files organized by category (all/documents/photos/other), support preview for images, downloadable for all types, persistent storage using useKV, display file metadata (name, size, upload date, uploader). Shareable links work for external users, sharing can be enabled/disabled per file, shared files display in clean standalone viewer.
 
 ### Team Dashboard
 - **Functionality**: Overview screen showing upcoming events, recent messages, roster summary, and quick actions
@@ -71,6 +71,7 @@ This is a multi-faceted platform requiring user roles, event management, roster 
 - **Data Validation**: Prevent invalid dates, ensure required fields are complete, validate email/phone formats
 - **Long Lists**: Implement virtual scrolling and pagination for rosters/schedules with 100+ items
 - **Concurrent Edits**: Use optimistic updates with conflict resolution when multiple users edit simultaneously
+- **Shared File Access**: Display clear error states when shared files are not found, sharing is disabled, or links are invalid. Show loading state while fetching shared file data.
 
 ## Design Direction
 
@@ -114,7 +115,7 @@ Animations should feel snappy and athletic, reinforcing the energetic nature of 
 - **Components**:
   - Calendar: Custom-built using react-day-picker base with color-coded event types and attendance indicators
   - Cards: Shadcn Card for roster profiles, event details, stat summaries, and file previews with hover lift effects
-  - Dialog: Shadcn Dialog for event creation/editing forms and image previews with full-screen mobile adaptation
+  - Dialog: Shadcn Dialog for event creation/editing forms, image previews, and file sharing settings with full-screen mobile adaptation
   - Tabs: Shadcn Tabs for switching between Schedule/Roster/Messages/Stats views and file categories (All/Documents/Photos/Other)
   - Avatar: Shadcn Avatar for player profile images with fallback to initials
   - Badge: Shadcn Badge for player positions, attendance status, notification counts, and file counts in tabs
@@ -122,8 +123,8 @@ Animations should feel snappy and athletic, reinforcing the energetic nature of 
   - Form: Shadcn Form components with react-hook-form for all data entry
   - Select: Shadcn Select for dropdowns (event types, player positions, time zones, file categories)
   - Textarea: Shadcn Textarea for messages and notes
-  - Switch: Shadcn Switch for boolean settings
-  - Toast: Sonner for success confirmations and error notifications
+  - Switch: Shadcn Switch for boolean settings and enabling/disabling file sharing
+  - Toast: Sonner for success confirmations, error notifications, and share link copy confirmations
   - File Input: Native HTML file input with custom styling for multiple file uploads
 
 - **Customizations**:
@@ -135,6 +136,8 @@ Animations should feel snappy and athletic, reinforcing the energetic nature of 
   - File Upload Zone: Drag-and-drop area with file type validation and multi-file support
   - File Grid: Responsive grid layout with image thumbnails and document icons
   - Image Preview Modal: Full-screen image viewer with download and delete actions
+  - File Share Dialog: Toggle-based sharing control with auto-generated shareable links and copy-to-clipboard functionality
+  - Shared File Viewer: Standalone full-page viewer for external file access with download capability and branding
 
 - **States**:
   - Buttons: Hover lift (translateY -1px), active press (scale 0.98), disabled opacity 0.5
@@ -145,12 +148,12 @@ Animations should feel snappy and athletic, reinforcing the energetic nature of 
 
 - **Icon Selection**:
   - Navigation: CalendarBlank (schedule), Users (roster), FolderOpen (files), ChatCircle (messages), ChartBar (stats/dashboard)
-  - Actions: Plus (add), PencilSimple (edit), Trash (delete), Check (confirm), UploadSimple (upload), DownloadSimple (download)
+  - Actions: Plus (add), PencilSimple (edit), Trash (delete), Check (confirm), UploadSimple (upload), DownloadSimple (download), ShareNetwork (share), Copy (copy link), Link (shareable link indicator)
   - Events: Trophy (games), Whistle (practices), Calendar (general events)
   - Files: Image (photos), File (generic), FilePdf (PDF documents), FileDoc (text documents)
   - Availability: CheckCircle (available), Clock (maybe), XCircle (unavailable)
   - Communication: Bell (notifications), PaperPlaneTilt (send message)
-  - Status: Warning (conflicts), Info (announcements), Lock (permissions)
+  - Status: Warning (conflicts/errors), Info (announcements), Lock (permissions)
 
 - **Spacing**:
   - Page Margins: px-4 md:px-6 lg:px-8
@@ -166,9 +169,11 @@ Animations should feel snappy and athletic, reinforcing the energetic nature of 
   - File Upload: Full-screen dialog on mobile with simplified upload interface
   - File Grid: Single column on mobile, 2-column on tablet, 3-column on desktop
   - Image Preview: Full-screen on mobile with swipe gestures, modal on desktop
+  - File Sharing Dialog: Centered modal with copy link functionality, optimized for mobile touch targets
+  - Shared File Viewer: Full-viewport responsive layout that adapts to all screen sizes with centered card presentation
   - Calendar: Single day list view on mobile, week grid on tablet, month grid on desktop
   - Roster: Single column stack on mobile, 2-column grid on tablet, 3-column on desktop
   - Messages: Full viewport on mobile with back navigation, side panel on desktop
   - Quick Actions: Floating action button (FAB) on mobile bottom-right for primary add actions
-  - Touch Targets: Minimum 44px height for all interactive elements including file cards
+  - Touch Targets: Minimum 44px height for all interactive elements including file cards and share buttons
   - Typography: Scale down h1 to 24px on mobile, h2 to 20px, maintain body at 14px for readability
